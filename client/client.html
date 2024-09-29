@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>xxx</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			text-align: center;
+			background-color: #282c34;
+			color: white;
+		}
+		.game-container {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+		.player-info, .game-controls {
+			margin: 20px;
+		}
+		.cards {
+			display: flex;
+			justify-content: center;
+			gap: 10px;
+		}
+		.card {
+			width: 50px;
+			height: 75px;
+			border: 2px solid #fff;
+			border-radius: 10px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background-color: #4CAF50;
+		}
+		.bet-input {
+			margin-top: 10px;
+		}
+		button {
+			padding: 10px 20px;
+			font-size: 16px;
+			cursor: pointer;
+			border: none;
+			border-radius: 5px;
+		}
+		.bet-button {
+			background-color: #008CBA;
+			color: white;
+		}
+		.message {
+			margin-top: 20px;
+			font-size: 18px;
+		}
+	</style>
+</head>
+<body>
+<h1>T</h1>
+<div class="game-container">
+	<!-- 显示玩家信息 -->
+	<div class="player-info">
+		<p>玩家名称: <span id="player-name"></span></p>
+		<p>筹码: <span id="player-chips"></span></p>
+	</div>
+
+	<!-- 显示玩家的手牌 -->
+	<div class="cards" id="player-cards"></div>
+
+	<!-- 下注控件 -->
+	<div class="game-controls">
+		<input type="number" id="bet-amount" class="bet-input" placeholder="xz">
+		<button class="bet-button" onclick="placeBet()">xz</button>
+	</div>
+
+	<!-- 信息显示区域 -->
+	<div class="message" id="game-message"></div>
+</div>
+
+<script>
+    const playerNameElement = document.getElementById('player-name');
+    const playerChipsElement = document.getElementById('player-chips');
+    const playerCardsElement = document.getElementById('player-cards');
+    const gameMessageElement = document.getElementById('game-message');
+    let playerName, playerChips;
+
+    // 连接到 WebSocket 服务器
+    const ws = new WebSocket('ws://localhost:8080');
+
+    ws.onopen = function() {
+        console.log('已连接到服务器');
+    };
+
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+
+        if (data.message) {
+            gameMessageElement.innerText = data.message;
+        }
+
+        // 如果是玩家信息更新
+        if (data.chips !== undefined) {
+            playerChips = data.chips;
+            updatePlayerInfo();
+        }
+
+        // 如果是发牌信息
+        if (data.cards) {
+            displayPlayerCards(data.cards);
+        }
+
+        if (data.error) {
+            alert(`错误: ${data.error}`);
+        }
+    };
+
+    // 更新玩家信息显示
+    function updatePlayerInfo() {
+        playerNameElement.innerText = playerName || '未知玩家';
+        playerChipsElement.innerText = playerChips || '未知';
+    }
+
+    // 显示玩家手牌
+    function displayPlayerCards(cards) {
+        playerCardsElement.innerHTML = '';  // 清空之前的牌
+        cards.forEach(card => {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'card';
+            cardElement.innerText = `${card.color} ${card.value}`;
+            playerCardsElement.appendChild(cardElement);
+        });
+    }
+
+    // 下注功能
+    function placeBet() {
+        const betAmount = document.getElementById('bet-amount').value;
+        if (!betAmount || betAmount <= 0) {
+            alert('请输入有效的下注金额');
+            return;
+        }
+
+        if (playerChips < betAmount) {
+            alert('筹码不足');
+            return;
+        }
+
+        // 发送下注请求到服务器
+        ws.send(JSON.stringify({
+            type: 'bet',
+            amount: parseInt(betAmount, 10)
+        }));
+    }
+</script>
+</body>
+</html>

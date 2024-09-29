@@ -102,31 +102,34 @@ function calCardRank(info){
 }
 
 const compareCardSize = (players) => {
-
     const ranks = players.map(player => ({
         name: player.name,
-        rank: calCardRank(player)
+        rank: calCardRank(player.cards),
+        cards: player.cards.cards,  // 新增，显示每位玩家的牌
     }));
 
-    const sortedPlayers = ranks.sort((a, b) => a.rank - b.rank);
+    // 根据排名进行排序
+    const sortedPlayers = ranks.sort((a, b) => b.rank - a.rank);
 
+    // 显示每个玩家的牌型
     sortedPlayers.forEach((playerInfo, index) => {
-        console.log(`${index} 的牌型为: ${Map[playerInfo.rank]}`);
+        console.log(`${index + 1} 的牌型为: ${Map[playerInfo.rank]} (${playerInfo.cards.map(c => c.color + c.value).join(', ')})`);
     });
 
-    //const winner = sortedPlayers[sortedPlayers.length - 1].name;
-    console.log(`${sortedPlayers.length - 1} 赢了`);
+    const winner = sortedPlayers[0];
+    console.log(`${winner.name} 赢了`);
 
-    if (sortedPlayers.some((playerInfo, i, arr) => playerInfo.rank === arr[0].rank)) {
+    // 检查是否有牌型相同的玩家，并逐张比较
+    if (sortedPlayers.some((player, i, arr) => player.rank === arr[0].rank)) {
         console.log('部分玩家的牌型相同，开始逐张比较');
-        const highestRankPlayers = sortedPlayers.filter(playerInfo => playerInfo.rank === sortedPlayers[0].rank);
+        const highestRankPlayers = sortedPlayers.filter(player => player.rank === sortedPlayers[0].rank);
 
         const cardsLength = highestRankPlayers[0].cards.length;
 
         for (let i = 0; i < cardsLength; i++) {
             console.log(`第${i + 1}轮PK`);
             highestRankPlayers.forEach(player => {
-                console.log(`${player.name} pok ${player.cards[i].color} ${player.cards[i].value}`);
+                console.log(`${player.name} 的第${i + 1}张牌: ${player.cards[i].color} ${player.cards[i].value}`);
             });
 
             let roundWinner = null;
@@ -142,12 +145,14 @@ const compareCardSize = (players) => {
 
             if (roundWinner) {
                 console.log(`${roundWinner} 在本轮获胜`);
+                break;
             } else {
                 console.log('本轮平局');
             }
         }
     }
-}
+};
+
 
 export {
     generate52Cards,
